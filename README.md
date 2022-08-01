@@ -3,7 +3,7 @@ Store All My Automation Task
 
 ## All Suppprted Software
  1. python
-    - [VENV Handler](./python/venv-handler)
+    - [VENV Handler](https://lokesh-kurre.github.io/personal-jobs/python/venv-handler)
  
  
  
