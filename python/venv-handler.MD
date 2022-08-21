@@ -11,7 +11,7 @@ This assumes that, you have already install python and had setup in environment.
 ## Installation Steps
 Copy and paste the following command into terminal
 ```
-curl -fsSL https://gist.githubusercontent.com/lokesh-kurre/4ff86d8aa58e8a4f2fe7508e422afee8/raw/8b36b25dabbb2312574d723d080b3f9ca846b198/install.cmd -o install.cmd && install.cmd && del install.cmd
+curl -fsSL https://gist.githubusercontent.com/lokesh-kurre/4ff86d8aa58e8a4f2fe7508e422afee8/raw/install.cmd -o install.cmd && install.cmd && del install.cmd
 ```
 
 ## Info
