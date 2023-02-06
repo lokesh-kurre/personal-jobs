@@ -1,0 +1,132 @@
+#! /usr/bin/bash
+shopt -s extglob globstar
+function preprocess() {
+	if [ -e ".rsync.conf" ]; then
+		source .rsync.conf
+	else
+		echo "You don't have config file in current directory"
+		read -p 'Do you want to create it? (y/N) ' choice
+		choice=${choice:-N}
+		if [ "$choice" = 'y' ]; then
+			edit
+		fi
+	fi
+}
+
+function pull() { 
+	preprocess
+	if [[ "$1" = 'dry-run' ]]; then
+		echo Performing Dry Run pull from server $REMOTE to $LOCAL
+		rsync -nrlputEzvh --exclude-from=$IGNOREFILE $REMOTE/ $LOCAL
+	else
+		echo Pulling code from server $REMOTE to $LOCAL
+		rsync -rilptuEzvh --exclude-from=$IGNOREFILE  $REMOTE/ $LOCAL
+	fi
+}
+
+function push() {
+	preprocess
+	if [[ "$1" = 'dry-run' ]]; then
+	  	echo Performing Dry Run push from $LOCAL to server $REMOTE
+		rsync -nrilptEuzvh --exclude-from=$IGNOREFILE $LOCAL/ $REMOTE
+	else 
+		echo Pushing code from  $LOCAL to server $REMOTE
+		rsync -rliptEuzvh --progress --exclude-from=$IGNOREFILE $LOCAL/ $REMOTE
+	fi
+}
+
+function edit() {
+	if [ -e .rsync.conf ]; then 
+		source .rsync.conf
+#		chattr -i .rsync.conf
+	fi
+	if [[ -n $REMOTE ]]; then
+		read -p "Enter Remote Repo: (current value: $REMOTE) " remote_repo
+		remote_repo=${remote_repo:=$REMOTE}
+	else
+		read -p "Enter Remote Repo: " remote_repo
+	fi
+	if [[ -n $LOCAL ]]; then 
+		read -p "Enter Local Repo: (current value: $LOCAL) " local_repo
+		local_repo=${local_repo:=$LOCAL}
+	else
+		read -p "Enter Local Repo: " local_repo
+	fi
+	if [[ -n $IGNOREFILE ]]; then
+		read -p "Enter Rsync Ignore File Pattern name: (current value: $IGNOREFILE) " ignorefilename
+		ignorefilename=${ignorefilename:-$IGNOREFILE}
+	else
+		read -p "Enter Rsync Ifnore File Pattern Name: (default: .rsync.ignore) " ignorefilename
+	fi
+	echo REMOTE=${remote_repo%%+(/)} > .rsync.conf
+	echo LOCAL=${local_repo%%+(/)} >> .rsync.conf
+	echo IGNOREFILE=${ignorefilename:-.rsync.ignore} >> .rsync.conf
+	touch $IGNOREFILE
+#	chattr +i .rsync.conf
+}
+
+function list() {
+	if [ -e ".rsync.conf" ]; then 
+		cat .rsync.conf
+	fi
+}
+
+function help() {
+	echo 'Sync The local folder with remote folder'
+	echo 'Usage: rsync [options] [cmd]'
+	echo 
+	echo 'Commands:'
+	echo '  push			push the codes to remote server'
+	echo '  pull			pull the codes from remote server'
+	echo
+	echo 'Options'
+	echo '  -t, --test		performs dry run for the followed command'
+	echo '  -e, --edit		edit the config file'
+	echo '  -l, --list		list the config file'
+	echo '  -h, --help      display help'
+	echo
+}
+
+if [ $# -eq 1 ]; then
+	if [[ "$1" = -* ]]; then
+		case $1 in
+			"-e" | "--edit")
+				edit
+				;;
+			"-l" | "--list")
+				list
+				;;
+			"-h" | "--help")
+				help
+				;;
+			*)
+				echo 'Command is missing'
+				echo 'Refer Syntax'
+				help
+				;;
+		esac
+	elif [[ "$1" = 'push' ]]; then
+		push
+	elif [[ "$1" = 'pull' ]]; then
+		pull
+	else
+		echo 'Invalid Command'
+		help
+	fi
+elif [ $# -eq 2 ]; then
+	if [[ "$1" = "-t" || "$1" = "--test" ]]; then
+		if [[ "$2" = "push" ]]; then
+			push dry-run
+		elif [[ "$2" = "pull" ]]; then
+			pull dry-run
+		else
+			echo 'Invalid Command'
+			help
+		fi
+	else
+		echo 'Invalid Command'
+		help
+	fi
+else
+	help
+fi
